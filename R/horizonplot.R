@@ -45,27 +45,36 @@ horizonplot.default <-
             horizonscale <- diff(ans$y.limits)
         }
         if (is.na(horizonscale)) {
-            labels <- expression(
-                - 3 * Delta[i], - 2 * Delta[i], - 1 * Delta[i], 0,
-                + 1 * Delta[i], + 2 * Delta[i], + 3 * Delta[i], 0)
+            #labels <- expression(
+            #    - 3 * Delta[i], - 2 * Delta[i], - 1 * Delta[i], 0,
+            #    + 1 * Delta[i], + 2 * Delta[i], + 3 * Delta[i], 0)
+            labels <- c(do.call(c, sapply(as.numeric(-nBands:-1),
+                          function(x){substitute(expression(a * Delta[i]), 
+                                                 list(a=x))})),
+                        0,
+                        do.call(c, sapply(as.numeric(1:nBands),
+                          function(x){substitute(expression(+a * Delta[i]),
+                                                 list(a=x))})),
+                        0
+                        )
             if (is.numeric(origin)) {
-                labels[4] <- origin
+                labels[nBands+1] <- origin
             } else {
-                labels[4] <- "origin"
+                labels[nBands+1] <- "origin"
             }
         } else {
             if (is.numeric(origin)) {
-                labels <- round(origin + (-3:3) * horizonscale, colorkey.digits)
+                labels <- round(origin + ((-nBands):nBands) * horizonscale, colorkey.digits)
             } else {
-                labels <- paste(ifelse(-3:3>=0,"+","-"),
-                                round(abs(-3:3) * horizonscale, colorkey.digits))
-                labels[4] <- "origin"
+                labels <- paste(ifelse(((-nBands):nBands)>=0,"+","-"),
+                                round(abs((-nBands):nBands) * horizonscale, colorkey.digits))
+                labels[nBands+1] <- "origin"
             }
         }
-        ii <- round((0:5 / 5) * (length(col.regions)-1)) + 1
+        ii <- round((0:(2*nBands-1) / (2*nBands-1)) * (length(col.regions)-1)) + 1
         colorkey <-
-            modifyList(list(col = col.regions[ii], at = -3:3,
-                            labels = list(labels = labels, at = -3:3)),
+            modifyList(list(col = col.regions[ii], at = -nBands:nBands,
+                            labels = list(labels = labels, at = -nBands:nBands)),
                        colorkey)
         space <- colorkey$space
         if (is.null(space)) space <- "right"
@@ -92,7 +101,8 @@ panel.horizonplot <-
     sections <- c(0, as.numeric(rbind(-(1:(nBands-1L)), 1:(nBands-1L))),
                   -nBands)
     #ii <- round(((sections + 3) / 5) * (length(col.regions)-1)) + 1
-    ii <- sections + nBands + 1
+    ii <- round(((sections + nBands) / (2*nBands-1)) * (length(col.regions)-1)) + 1
+    #ii <- sections + nBands + 1
     col <- col.regions[ii]
     for (i in seq_along(sections)) {
         section <- sections[i]
