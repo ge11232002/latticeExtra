@@ -12,10 +12,11 @@ horizonplot.default <-
              colorkey = FALSE, legend = NULL,
              panel = panel.horizonplot,
              prepanel = prepanel.horizonplot,
-             col.regions = c("#B41414","#E03231","#F7A99C","#9FC8DC","#468CC8","#0165B3"),
+             nBands=3L,
+             col.regions = brewer.pal(n=nBands*2,name="RdYlBu"),
              strip = FALSE, strip.left = TRUE,
              par.strip.text = list(cex = 0.6),
-             colorkey.digits = 3,
+             colorkey.digits = nBands,
              #layout = c(1, NA), ## TODO pending new lattice release
              groups = NULL,
              default.scales =
@@ -31,7 +32,8 @@ horizonplot.default <-
                   strip = strip, strip.left = strip.left,
                   par.strip.text = par.strip.text,
                   #layout = layout,
-                  default.scales = default.scales)
+                  default.scales = default.scales,
+                  nBands=nBands)
     ans$call <- match.call()
     ## add colorkey
     if (isTRUE(colorkey)) {
@@ -78,15 +80,19 @@ horizonplot.default <-
 
 panel.horizonplot <-
     function(x, y, ..., border = NA,
-             col.regions = c("#B41414","#E03231","#F7A99C","#9FC8DC","#468CC8","#0165B3"),
+             nBands=3L,
+             col.regions = brewer.pal(n=nBands*2,name="RdYlBu"),
              origin) ## catch origin, don't pass to panel.xyarea!
 {
     regions <- trellis.par.get("regions")
     origin <- current.panel.limits()$y[1]
     scale <- diff(current.panel.limits()$y)
     ## ordered for drawing, from least extreme to most extreme
-    sections <- c(0, -1, 1, -2, 2, -3) ## these are the lower bounds
-    ii <- round(((sections + 3) / 5) * (length(col.regions)-1)) + 1
+    #sections <- c(0, -1, 1, -2, 2, -3) ## these are the lower bounds
+    sections <- c(0, as.numeric(rbind(-(1:(nBands-1L)), 1:(nBands-1L))),
+                  -nBands)
+    #ii <- round(((sections + 3) / 5) * (length(col.regions)-1)) + 1
+    ii <- sections + nBands + 1
     col <- col.regions[ii]
     for (i in seq_along(sections)) {
         section <- sections[i]
@@ -106,13 +112,14 @@ panel.horizonplot <-
 
 prepanel.horizonplot <-
     function(x, y, ..., horizonscale = NA,
-             origin = function(y) na.omit(y)[1])
+             origin = function(y) na.omit(y)[1],
+             nBands=4)
 {
     if (is.function(origin))
         origin <- origin(y)
     ans <- prepanel.default.xyplot(x, y, ...)
     if (is.na(horizonscale))
-        horizonscale <- max(abs(ans$ylim - origin)) / 3
+        horizonscale <- max(abs(ans$ylim - origin)) / nBands
     ans$ylim <- origin + c(0, horizonscale)
     ans
 }
