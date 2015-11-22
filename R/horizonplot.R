@@ -123,7 +123,7 @@ panel.horizonplot <-
 prepanel.horizonplot <-
     function(x, y, ..., horizonscale = NA,
              origin = function(y) na.omit(y)[1],
-             nBands=4)
+             nBands=3L)
 {
     if (is.function(origin))
         origin <- origin(y)
